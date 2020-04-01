@@ -1,0 +1,9 @@
+FSharp.Core
+TypeShape
+Nunit
+FsCheck
+FsCheck.Nunit
+Nunit3TestAdapter
+Microsoft.NET.Test.Sdk
+Microsoft.Extensions.Configuration.EnvironmentVariables
+Microsoft.Extensions.Configuration.Json

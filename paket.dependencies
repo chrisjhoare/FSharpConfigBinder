@@ -1,0 +1,12 @@
+source https://www.nuget.org/api/v2
+nuget FsCheck
+nuget FsCheck.Nunit
+nuget FSharp.Core
+nuget Microsoft.Extensions.Configuration
+nuget Microsoft.Extensions.Configuration.Binder
+nuget Microsoft.Extensions.Configuration.EnvironmentVariables
+nuget Microsoft.Extensions.Configuration.Json
+nuget Microsoft.NET.Test.Sdk
+nuget Nunit
+nuget Nunit3TestAdapter
+nuget TypeShape
