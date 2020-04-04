@@ -18,7 +18,7 @@ module ConfigBinder =
     open TypesBuilder
     
     [<AutoOpen>]
-    module internal ConfigurationExtensions =
+    module ConfigurationExtensions =
 
         type IConfiguration with
             member private this.CaseInsensitivePaths = 
@@ -39,9 +39,22 @@ module ConfigBinder =
     type FieldConfigBinder =
         static member Assign(_ : App<FieldConfigBinder, 'a>, _ : (IConfiguration * string) -> 'a -> 'a) = ()
 
-    let private configValuesBuilder = 
+    let configValuesBuilder = 
         { new IConfigurationTypesBuilder<ConfigBinder,FieldConfigBinder> with
             
+            member __.Union shape _ = 
+                
+                let caseLookup = shape.UnionCases |> Array.map (fun case -> case.CaseInfo.Name, case) |> Map
+               
+                HKT.pack(fun path config ->
+
+                    let value:string = IConfiguration.GetFromPath path config
+
+                    match caseLookup.TryFind value with
+                    | Some case -> case.CreateUninitialized ()
+                    | None -> failwithf "Invalid union case: %s" value
+                )
+
             member __.List (HKT.Unpack fcs) =
                 HKT.pack 
                     (fun path config -> 
@@ -80,6 +93,11 @@ module ConfigBinder =
             member __.Bool()    = HKT.pack IConfiguration.GetFromPath
         }
     
-    let mkConfigurationBinder<'t> = 
-        let program = (mkGenericProgram configValuesBuilder).Resolve<'t> () |> HKT.unpack
+
+    let mkExtendedConfigurationBinder<'t> (extendedPrograms) = 
+        let program = (mkGenericProgram configValuesBuilder extendedPrograms).Resolve<'t> () |> HKT.unpack
         fun (c:IConfiguration) -> program String.Empty c
+
+    let mkConfigurationBinder<'t> :(IConfiguration -> 't) = 
+        mkExtendedConfigurationBinder<'t> []
+        

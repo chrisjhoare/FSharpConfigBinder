@@ -18,6 +18,16 @@ module ConfigKeyValuePairBuilder =
     let private configValueBuilder = 
         { new IConfigurationTypesBuilder<ConfigKeyValuePairBuilder, FieldConfigKeyValuePairBuilder> with
 
+            member __.Union shape _ = 
+                
+                HKT.pack (fun kv path item ->
+
+                    let tag = shape.GetTag item
+                    let case = shape.UnionCases.[tag]
+
+                    kv.Add (path, case.CaseInfo.Name)
+                )
+
             member __.List (HKT.Unpack fcs) =
                 HKT.pack 
                     (fun kv path items -> 
@@ -56,17 +66,22 @@ module ConfigKeyValuePairBuilder =
             member __.Int32()   = HKT.pack (fun kv path item -> kv.Add (path, sprintf "%d" item))
             member __.Bool()    = HKT.pack (fun kv path item -> kv.Add (path, sprintf "%O" item))
         }
-        
-    let mkKeyValuePairBuilder<'t> = 
-        let program = (mkGenericProgram configValueBuilder).Resolve<'t> () |> HKT.unpack
+
+    let mkKeyValuePairBuilderExtended<'t> extensions = 
+        let program = (mkGenericProgram configValueBuilder extensions).Resolve<'t> () |> HKT.unpack
         fun (t:'t) -> 
             program Map.empty String.Empty t
             |> Map.toList
             |> List.map KeyValuePair
+
+    let mkKeyValuePairBuilder<'t> = mkKeyValuePairBuilderExtended<'t> []
                   
-    let buildConfigurationFor (t:'t) = 
+    let buildConfigurationForExtended (t:'t) extensions = 
             
         let configuration = new ConfigurationBuilder()
-        let values = t |> mkKeyValuePairBuilder 
+        let values = t |> mkKeyValuePairBuilderExtended extensions
         configuration.AddInMemoryCollection(values).Build() :> IConfiguration
+
+    let buildConfigurationFor (t:'t) = buildConfigurationForExtended t []
+            
 

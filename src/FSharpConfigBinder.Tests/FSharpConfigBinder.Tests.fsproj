@@ -13,7 +13,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="paket.references" />
+    <Compile Include="TestUtil.fs" />
     <Compile Include="ConfigBinderTests.fs" />
+    <Compile Include="ConfigBinderExtensionTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FSharpConfigBinder\FSharpConfigBinder.fsproj" />

@@ -18,10 +18,13 @@ module ConfigBinderTests =
 
         type HandledTypesSubsection = { String: string }
 
+        type SingleCaseUnion = One | Two
+
         type HandledTypesConfig = {
             String: string
             StringList: string list
             Bool: bool
+            SingleCaseUnion: SingleCaseUnion
             OptionalString: string option
             Int: int
             Subsection: HandledTypesSubsection
@@ -44,6 +47,22 @@ module ConfigBinderTests =
             
             original = roundTripped
 
+
+        type DU = One of int | Two of string
+        type Record = { DU: DU }
+
+        [<Test>]
+        let ``DUs with fields not supported`` () = 
+
+            let record = { DU = One 1 }
+
+            let ex = Assert.Throws(fun () -> ConfigKeyValuePairBuilder.buildConfigurationFor record |> ignore)
+
+            printfn "%A" ex
+
+            ()
+
+
         [<Test>]
         let ``Fails when non optional field is missing`` () = 
 
@@ -54,9 +73,8 @@ module ConfigBinderTests =
                 let sampleTypeKeyValuePairs = kvPairBuilder sampleType
                 sampleTypeKeyValuePairs |> List.filter (fun kv -> kv.Key <> "String")
 
-            let configuration =
-                let builder = new ConfigurationBuilder()
-                builder.AddInMemoryCollection(missingRequiredField).Build () :> IConfiguration
+            let configuration = TestUtil.createConfig missingRequiredField
+                
             
             let expected = ConfigurationPathMissingException "String"
             let exn = Assert.Catch(fun () -> configuration |> bindTypeFromConfig |> ignore)
@@ -116,8 +134,7 @@ module ConfigBinderTests =
             let caseTypeTestBinder = ConfigBinder.mkConfigurationBinder<CaseTestType>
 
             let test kvp = 
-                let builder = new ConfigurationBuilder()
-                let configuration = builder.AddInMemoryCollection([kvp]).Build ()
+                let configuration = TestUtil.createConfig ([kvp])
                 let output = caseTypeTestBinder configuration
                 Assert.AreEqual (output.CaseTest, "test")
 
